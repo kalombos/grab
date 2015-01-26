@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 from grab.spider.error import SpiderMisuseError
 from grab.base import copy_config
 
+
 class BaseTask(object):
     pass
 
@@ -136,9 +137,13 @@ class Task(BaseTask):
         self.use_proxylist = use_proxylist
         self.cache_timeout = cache_timeout
         self.raw = raw
+        self.gen = None
         self.callback = callback
         for key, value in kwargs.items():
             setattr(self, key, value)
+
+    def setup_gen(self, gen):
+        self.gen = gen
 
     def get(self, key, default=None):
         """
@@ -251,3 +256,12 @@ class NullTask(BaseTask):
         self.priority_is_custom = False
         self.network_try_count = network_try_count
         self.task_try_count = task_try_count
+
+
+def inline(f):
+    def wrap(*args, **kwargs):
+        gen = f(*args, **kwargs)
+        gen.send(None)
+        self, grab, task = args
+        self.coroutines[task.name] = gen
+    return wrap

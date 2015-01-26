@@ -173,6 +173,7 @@ class Spider(SpiderMetaClassMixin, SpiderPattern, SpiderStat):
         self.generator_done_event = generator_done_event
         self.network_response_queue = network_response_queue
         self.ng = ng
+        self.coroutines = {}
         # New options ends
 
         if args is None:
@@ -751,6 +752,11 @@ class Spider(SpiderMetaClassMixin, SpiderPattern, SpiderStat):
             logger_verbose.debug('Submitting result for task %s to response'
                                  ' queue' % res['task'])
             self.network_response_queue.put(res)
+        elif res['task'].gen is not None:
+            try:
+                self.coroutines[res['task'].gen].send('fuck')
+            except StopIteration:
+                pass
         else:
             handler = self.find_task_handler(res['task'])
             self.execute_task_handler(res, handler)
@@ -1150,9 +1156,9 @@ class Spider(SpiderMetaClassMixin, SpiderPattern, SpiderStat):
                     self.waiting_shutdown_event.clear()
                 logger_verbose.debug('Got new response from response '
                                      'queue: %s' % response['task'].url)
-
-                handler = self.find_task_handler(response['task'])
-                self.execute_task_handler(response, handler)
+                if response['task'].gen is None:
+                    handler = self.find_task_handler(response['task'])
+                    self.execute_task_handler(response, handler)
 
         logger_verbose.debug('Work done')
 

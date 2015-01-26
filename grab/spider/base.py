@@ -360,6 +360,10 @@ class Spider(SpiderMetaClassMixin, SpiderPattern, SpiderStat):
         else:
             return randint(*RANDOM_TASK_PRIORITY_RANGE)
 
+    def add_inline_task(self, old_task, task):
+        task.gen = old_task.name
+        self.add_task(task)
+
     def add_task(self, task):
         """
         Add task to the task queue.
